@@ -1,50 +1,92 @@
-# Welcome to your Expo app 👋
+# Local Chatbot con GGUF
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Una aplicación de chat que utiliza modelos de lenguaje local GGUF para ejecutarse directamente en tu dispositivo sin necesidad de conexión a internet.
 
-## Get started
+## Características
 
-1. Install dependencies
+- Interfaz de chat moderna y atractiva
+- Temas claro y oscuro
+- Procesamiento de lenguaje natural local con modelos GGUF
+- No requiere conexión a internet para funcionar
+- Privacidad garantizada, toda la información se procesa en el dispositivo
 
-   ```bash
-   npm install
-   ```
+## Requisitos previos
 
-2. Start the app
+- Node.js 18 o superior
+- Expo CLI
+- Android Studio (para desarrollo Android)
+- Xcode (para desarrollo iOS)
 
-   ```bash
-    npx expo start
-   ```
+## Instalación
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+1. Clona este repositorio:
 ```bash
-npm run reset-project
+git clone https://github.com/tu-usuario/localchatbot.git
+cd localchatbot
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Instala las dependencias:
+```bash
+npm install
+```
 
-## Learn more
+3. Añade un modelo GGUF:
+   - Descarga un modelo GGUF compatible (recomendamos TinyLlama o Mistral Small) desde [HuggingFace](https://huggingface.co/)
+   - Coloca el archivo GGUF en la carpeta `assets/models/` y nómbralo como `tinyllama-1.1b.gguf` (o actualiza el nombre en el código)
 
-To learn more about developing your project with Expo, look at the following resources:
+4. Inicia la aplicación:
+```bash
+npm run reset
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Estructura del proyecto
 
-## Join the community
+- `/app` - Pantallas y navegación de la aplicación
+- `/components` - Componentes reutilizables
+- `/context` - Proveedores de contexto (tema, etc.)
+- `/hooks` - Hooks personalizados
+- `/native-modules` - Módulos nativos para integración con el modelo GGUF
+- `/assets` - Recursos estáticos (imágenes, fuentes, modelos)
 
-Join our community of developers creating universal apps.
+## Módulos nativos
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+El proyecto utiliza módulos nativos para interactuar con los modelos GGUF:
+
+- **LlamaModule**: Interfaz para cargar y ejecutar modelos GGUF
+  - `loadModel(modelName)`: Carga un modelo desde la carpeta assets/models
+  - `generateText(prompt, maxTokens)`: Genera texto basado en el prompt
+  - `unloadModel()`: Descarga el modelo de la memoria
+
+## Desarrollo
+
+Para el desarrollo, se recomienda utilizar:
+
+```bash
+npm run reset
+```
+
+Este comando limpia la caché y reinicia el servidor de desarrollo, lo cual es útil después de cambios en los módulos nativos.
+
+## Compilación
+
+### Android
+
+```bash
+eas build -p android --profile development
+```
+
+### iOS
+
+```bash
+eas build -p ios --profile development
+```
+
+## Notas sobre los modelos
+
+- Los modelos GGUF deben ser optimizados para dispositivos móviles (se recomiendan modelos pequeños)
+- El rendimiento depende del dispositivo y el tamaño del modelo
+- Se recomienda utilizar modelos de menos de 2GB para un rendimiento óptimo en la mayoría de dispositivos
+
+## Licencia
+
+MIT
