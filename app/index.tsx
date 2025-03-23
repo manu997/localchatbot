@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
 	View,
 	Text,
@@ -8,13 +8,11 @@ import {
 	Platform,
 	ActivityIndicator,
 	SafeAreaView,
-	Alert,
 } from "react-native";
 import { ChatMessage } from "../components/ChatMessage";
 import { ChatInput } from "../components/ChatInput";
 import { FontAwesome } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
-import { useLlamaModel } from "../hooks/useLlamaModel";
 import "../globals.css";
 
 // Tipo de mensaje
@@ -33,107 +31,39 @@ const generateMessageId = (): string => {
 export default function ChatScreen() {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [inputText, setInputText] = useState("");
+	const [isProcessing, setIsProcessing] = useState(false);
 	const scrollViewRef = useRef<ScrollView>(null);
 	const { theme } = useTheme();
 	const isDark = theme === "dark";
 
-	// Usar el hook useLlamaModel
-	const { isReady, isLoading, isGenerating, generateText, loadModel, error } =
-		useLlamaModel({
-			modelName: "tinyllama-1.1b.gguf",
-			autoLoad: true,
-		});
+	// Manejar el envío de mensajes
+	const handleSend = useCallback(() => {
+		if (inputText.trim() && !isProcessing) {
+			// Agregar el mensaje del usuario a los mensajes
+			const newMessages = [
+				...messages,
+				{
+					id: generateMessageId(),
+					role: "user" as const,
+					content: inputText.trim(),
+				},
+			];
+			setMessages(newMessages);
+			setInputText("");
+			setIsProcessing(true);
 
-	// Mostrar errores del modelo
-	useEffect(() => {
-		if (error) {
-			Alert.alert("Error con el modelo", String(error), [
-				{ text: "OK", onPress: () => {} },
-			]);
-		}
-	}, [error]);
-
-	// Scroll automático cuando hay nuevos mensajes
-	useEffect(() => {
-		if (messages.length > 0) {
+			// Desplazar la vista de desplazamiento hacia abajo
 			setTimeout(() => {
 				scrollViewRef.current?.scrollToEnd({ animated: true });
 			}, 100);
+
+			// Aquí es donde se integraría el modelo GGUF en el futuro
+			// Por ahora, simplemente simulamos que el procesamiento ha terminado después de un tiempo
+			setTimeout(() => {
+				setIsProcessing(false);
+			}, 500);
 		}
-	}, [messages]);
-
-	// Iniciar conversación
-	const startConversation = useCallback(
-		(welcomeMessage = "Hola, ¿en qué puedo ayudarte hoy?") => {
-			setMessages([
-				{
-					id: generateMessageId(),
-					role: "assistant",
-					content: welcomeMessage,
-				},
-			]);
-		},
-		[],
-	);
-
-	// Manejar el envío de mensajes
-	const handleSend = useCallback(async () => {
-		if (inputText.trim() && !isGenerating) {
-			// Agregar el mensaje del usuario
-			const userMessage = {
-				id: generateMessageId(),
-				role: "user" as const,
-				content: inputText.trim(),
-			};
-
-			const newMessages = [...messages, userMessage];
-			setMessages(newMessages);
-			setInputText("");
-
-			try {
-				// Verificar si el modelo está listo
-				if (!isReady && !isLoading) {
-					await loadModel();
-				}
-
-				// Generar respuesta
-				const response = await generateText(userMessage.content, {
-					maxTokens: 512,
-				});
-
-				if (response) {
-					// Agregar respuesta del asistente
-					const assistantMessage = {
-						id: generateMessageId(),
-						role: "assistant" as const,
-						content: response.trim(),
-					};
-
-					setMessages([...newMessages, assistantMessage]);
-				}
-			} catch (err) {
-				console.error("Error al generar respuesta:", err);
-			}
-		}
-	}, [
-		inputText,
-		messages,
-		isReady,
-		isLoading,
-		isGenerating,
-		generateText,
-		loadModel,
-	]);
-
-	// Obtener estado del modelo
-	const getModelStatusText = () => {
-		if (isLoading) return "Cargando modelo...";
-		if (isReady) return "Modelo listo";
-		if (error) return "Error en el modelo";
-		return "Modelo no cargado";
-	};
-
-	const isProcessing = isLoading || isGenerating;
+	}, [inputText, messages, isProcessing]);
 
 	return (
 		<SafeAreaView
@@ -145,17 +75,6 @@ export default function ChatScreen() {
 				keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
 			>
 				<View className="flex-1">
-					{/* Estado del modelo */}
-					{!isReady && (
-						<View
-							className={`py-1 px-4 ${error ? "bg-red-700" : "bg-blue-700"}`}
-						>
-							<Text className="text-white text-center text-sm">
-								{getModelStatusText()}
-							</Text>
-						</View>
-					)}
-
 					<ScrollView
 						ref={scrollViewRef}
 						className="flex-1"
@@ -180,22 +99,22 @@ export default function ChatScreen() {
 									Bienvenido a Chat con GGUF
 								</Text>
 								<Text
-									className={`text-center mb-2 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+									className={`text-center mb-8 ${isDark ? "text-gray-300" : "text-gray-600"}`}
 								>
 									Un asistente basado en un modelo de lenguaje local que corre
 									en tu dispositivo.
 								</Text>
-								<Text
-									className={`text-center text-xs mb-8 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-								>
-									Estado: {getModelStatusText()}
-								</Text>
 								<TouchableOpacity
-									onPress={() =>
-										startConversation("Hola, ¿en qué puedo ayudarte hoy?")
-									}
+									onPress={() => {
+										const welcomePrompt = "Hola, ¿en qué puedo ayudarte hoy?";
+										const initialMessage = {
+											id: generateMessageId(),
+											role: "assistant" as const,
+											content: welcomePrompt,
+										};
+										setMessages([initialMessage]);
+									}}
 									className={`py-3 px-6 rounded-full ${isDark ? "bg-blue-600" : "bg-blue-500"}`}
-									disabled={isLoading}
 								>
 									<Text className="font-bold text-white">
 										Iniciar conversación
@@ -222,7 +141,7 @@ export default function ChatScreen() {
 						)}
 					</ScrollView>
 					{messages.length > 0 && (
-						<View className="w-full">
+						<View className="w-full mb-3">
 							<ChatInput
 								value={inputText}
 								onChangeText={setInputText}
