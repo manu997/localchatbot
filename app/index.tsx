@@ -1,150 +1,187 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
 	View,
 	Text,
 	ScrollView,
 	TouchableOpacity,
-	SafeAreaView,
+	KeyboardAvoidingView,
+	Platform,
 	ActivityIndicator,
-	Alert,
+	useColorScheme,
+	SafeAreaView,
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
-import { useMutation } from "@tanstack/react-query";
-
-import { ChatInput } from "../components/ChatInput";
 import { ChatMessage } from "../components/ChatMessage";
-import { useLlamaModel } from "../hooks/useLlamaModel";
+import { ChatInput } from "../components/ChatInput";
+import { FontAwesome } from "@expo/vector-icons";
+import "../globals.css";
 
-type Message = {
-	id: string;
-	content: string;
-	role: "user" | "assistant";
+// Definición de colores según el tema
+const Colors = {
+	light: {
+		background: "#F3F4F6",
+		cardBackground: "#FFFFFF",
+		text: "#1F2937",
+		accentText: "#4338CA",
+		buttonBackground: "#3B82F6",
+		buttonText: "#FFFFFF",
+		icon: "#3B82F6",
+		iconBackground: "#EFF6FF",
+	},
+	dark: {
+		background: "#111827",
+		cardBackground: "#1F2937",
+		text: "#F9FAFB",
+		accentText: "#93C5FD",
+		buttonBackground: "#3B82F6",
+		buttonText: "#FFFFFF",
+		icon: "#93C5FD",
+		iconBackground: "#374151",
+	},
 };
 
+// Tipo de mensaje
+type Message = {
+	id: string;
+	role: "user" | "assistant";
+	content: string;
+};
+
+// Generar ID único para mensajes
+const generateMessageId = (): string => {
+	return Date.now().toString() + Math.random().toString(36).substring(2, 9);
+};
+
+// Pantalla principal de chat
 export default function ChatScreen() {
 	const [messages, setMessages] = useState<Message[]>([]);
+	const [inputText, setInputText] = useState("");
+	const [isProcessing, setIsProcessing] = useState(false);
 	const scrollViewRef = useRef<ScrollView>(null);
+	const systemColorScheme = useColorScheme();
 
-	// Simulamos el hook de useLlamaModel, ya que aún no está implementado
-	const { isReady, isLoading, isGenerating, generateText } = {
-		isReady: true,
-		isLoading: false,
-		isGenerating: false,
-		generateText: async (prompt: string) => `Respuesta a: ${prompt}`,
-	};
-
-	// Mutación para generar respuestas
-	const generateResponseMutation = useMutation({
-		mutationFn: async (prompt: string) => {
-			return await generateText(prompt);
-		},
-		onSuccess: (response) => {
-			// Añadir la respuesta del asistente
-			setMessages((prev) => [
-				...prev,
-				{ id: Date.now().toString(), content: response, role: "assistant" },
-			]);
-		},
-		onError: (error) => {
-			// Mostrar error
-			Alert.alert(
-				"Error",
-				"No se pudo generar una respuesta. Por favor, inténtalo de nuevo.",
-				[{ text: "OK" }],
-			);
-			console.error("Error generando respuesta:", error);
-		},
-	});
+	// Forzar tema oscuro como se solicitó
+	const theme = "dark";
+	const colors = Colors[theme];
 
 	// Manejar el envío de mensajes
-	const handleSendMessage = (content: string) => {
-		// Añadir mensaje del usuario
-		const newMessage: Message = {
-			id: Date.now().toString(),
-			content,
-			role: "user",
-		};
+	const handleSend = useCallback(() => {
+		if (inputText.trim() && !isProcessing) {
+			// Agregar el mensaje del usuario a los mensajes
+			const newMessages = [
+				...messages,
+				{
+					id: generateMessageId(),
+					role: "user" as const,
+					content: inputText.trim(),
+				},
+			];
+			setMessages(newMessages);
+			setInputText("");
+			setIsProcessing(true);
 
-		setMessages((prev) => [...prev, newMessage]);
+			// Desplazar la vista de desplazamiento hacia abajo
+			setTimeout(() => {
+				scrollViewRef.current?.scrollToEnd({ animated: true });
+			}, 100);
 
-		// Generar respuesta
-		generateResponseMutation.mutate(content);
-	};
-
-	// Desplazarse hacia abajo al añadir nuevos mensajes
-	useEffect(() => {
-		if (scrollViewRef.current) {
-			scrollViewRef.current.scrollToEnd({ animated: true });
+			// Aquí es donde se integraría el modelo GGUF en el futuro
+			// Por ahora, simplemente simulamos que el procesamiento ha terminado después de un tiempo
+			setTimeout(() => {
+				setIsProcessing(false);
+			}, 500);
 		}
-	});
-
-	// Mensajes de bienvenida y carga
-	let statusMessage = "";
-	if (isLoading) {
-		statusMessage = "Cargando modelo...";
-	} else if (!isReady) {
-		statusMessage = "El modelo no está listo. Por favor, espera...";
-	}
+	}, [inputText, messages, isProcessing]);
 
 	return (
-		<SafeAreaView className="flex-1 bg-white">
-			<View className="flex-1 p-4">
-				{statusMessage ? (
-					<View className="flex-1 justify-center items-center">
-						<ActivityIndicator size="large" color="#0000ff" />
-						<Text className="mt-4 text-gray-600">{statusMessage}</Text>
-					</View>
-				) : (
-					<>
+		<SafeAreaView
+			className="flex-1"
+			style={{ backgroundColor: colors.background }}
+		>
+			<KeyboardAvoidingView
+				behavior={Platform.OS === "ios" ? "padding" : "height"}
+				className="flex-1"
+				style={{ backgroundColor: colors.background }}
+				keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+			>
+				<View className="flex-1">
+					<ScrollView
+						ref={scrollViewRef}
+						className="flex-1"
+						contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+					>
 						{messages.length === 0 ? (
-							<View className="flex-1 justify-center items-center">
-								<View className="p-6 rounded-full bg-blue-100 mb-4">
-									<FontAwesome name="comments" size={40} color="#3b82f6" />
+							// Pantalla de bienvenida cuando no hay mensajes
+							<View className="flex-1 justify-center items-center p-6">
+								<View
+									className="rounded-full p-5 mb-6"
+									style={{ backgroundColor: colors.iconBackground }}
+								>
+									<FontAwesome name="comments" size={40} color={colors.icon} />
 								</View>
-								<Text className="text-xl font-bold mb-2">
-									¡Bienvenido al Chatbot GGUF!
+								<Text
+									className="text-xl font-bold text-center mb-2"
+									style={{ color: colors.text }}
+								>
+									Bienvenido a Chat con GGUF
 								</Text>
-								<Text className="text-center text-gray-600 mb-6">
-									Este chatbot funciona completamente en tu dispositivo usando
-									un modelo GGUF.
+								<Text
+									className="text-center mb-8 opacity-80"
+									style={{ color: colors.text }}
+								>
+									Un asistente basado en un modelo de lenguaje local que corre
+									en tu dispositivo.
 								</Text>
 								<TouchableOpacity
-									className="bg-blue-500 py-3 px-6 rounded-full"
-									onPress={() => handleSendMessage("Hola, ¿cómo estás?")}
+									onPress={() => {
+										const welcomePrompt = "Hola, ¿en qué puedo ayudarte hoy?";
+										const initialMessage = {
+											id: generateMessageId(),
+											role: "user" as const,
+											content: welcomePrompt,
+										};
+										setMessages([initialMessage]);
+									}}
+									className="py-3 px-6 rounded-full"
+									style={{ backgroundColor: colors.buttonBackground }}
 								>
-									<Text className="text-white font-bold">
+									<Text
+										className="font-bold"
+										style={{ color: colors.buttonText }}
+									>
 										Iniciar conversación
 									</Text>
 								</TouchableOpacity>
 							</View>
 						) : (
-							<ScrollView
-								ref={scrollViewRef}
-								className="flex-1"
-								contentContainerStyle={{ paddingBottom: 16 }}
-							>
-								{messages.map((message) => (
-									<ChatMessage
-										key={message.id}
-										role={message.role}
-										content={message.content}
-									/>
-								))}
-								{isGenerating && (
-									<View className="self-start p-3 bg-gray-100 rounded-lg mb-2">
-										<ActivityIndicator size="small" color="#3b82f6" />
-									</View>
-								)}
-							</ScrollView>
+							// Lista de mensajes
+							messages.map((message) => (
+								<ChatMessage
+									key={message.id}
+									role={message.role}
+									content={message.content}
+									theme={theme}
+								/>
+							))
 						)}
-					</>
-				)}
-			</View>
-
-			<ChatInput
-				onSend={handleSendMessage}
-				isLoading={isGenerating || isLoading || !isReady}
-			/>
+						{isProcessing && (
+							<View className="p-4 flex items-center">
+								<ActivityIndicator size="small" color={colors.icon} />
+							</View>
+						)}
+					</ScrollView>
+					{messages.length > 0 && (
+						<View className="w-full">
+							<ChatInput
+								value={inputText}
+								onChangeText={setInputText}
+								onSend={handleSend}
+								isLoading={isProcessing}
+								theme={theme}
+							/>
+						</View>
+					)}
+				</View>
+			</KeyboardAvoidingView>
 		</SafeAreaView>
 	);
 }
