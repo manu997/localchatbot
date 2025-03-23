@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
 import { useTheme } from "../context/ThemeContext";
 
@@ -35,18 +35,15 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
 		return (
 			<View className="mb-3 items-start">
 				<BlurView
-					intensity={isDark ? 70 : 20}
+					intensity={isDark ? 40 : 20}
 					tint={isDark ? "dark" : "light"}
-					className={`
-						py-3 px-4 rounded-2xl rounded-tl-sm max-w-[85%]
-						${isDark ? "bg-gray-800/80" : "bg-white/70"}
-						shadow-sm
-					`}
+					className="py-3 px-4 rounded-2xl rounded-tl-sm max-w-[85%] shadow-sm"
+					style={isDark ? styles.darkAssistantBg : styles.lightAssistantBg}
 				>
 					<Text
 						className={`
 						text-base
-						${isDark ? "text-gray-100" : "text-gray-800"}
+						${isDark ? "text-white" : "text-gray-800"}
 					`}
 					>
 						{content}
@@ -60,15 +57,14 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
 			<View className="mb-3 items-start">
 				<View
 					className={`
-					py-3 px-4 rounded-2xl rounded-tl-sm max-w-[85%]
-					${isDark ? "bg-gray-800/90" : "bg-gray-100/90"}
-					shadow-sm
+					py-3 px-4 rounded-2xl rounded-tl-sm max-w-[85%] shadow-sm
+					${isDark ? "bg-gray-600/90" : "bg-gray-100/90"}
 				`}
 				>
 					<Text
 						className={`
 						text-base
-						${isDark ? "text-gray-100" : "text-gray-800"}
+						${isDark ? "text-white" : "text-gray-800"}
 					`}
 					>
 						{content}
@@ -78,3 +74,12 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
 		);
 	}
 }
+
+const styles = StyleSheet.create({
+	darkAssistantBg: {
+		backgroundColor: "rgba(75, 85, 99, 0.8)", // Equivalente a bg-gray-600/80
+	},
+	lightAssistantBg: {
+		backgroundColor: "rgba(255, 255, 255, 0.7)", // Equivalente a bg-white/70
+	},
+});

@@ -109,7 +109,7 @@ export default function ChatScreen() {
 										const welcomePrompt = "Hola, ¿en qué puedo ayudarte hoy?";
 										const initialMessage = {
 											id: generateMessageId(),
-											role: "user" as const,
+											role: "assistant" as const,
 											content: welcomePrompt,
 										};
 										setMessages([initialMessage]);
