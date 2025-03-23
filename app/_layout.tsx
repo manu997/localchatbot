@@ -1,13 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
-import { useEffect } from "react";
-import { View, Text, useColorScheme } from "react-native";
+import { View, Text } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { useColorScheme as useNativeWindColorScheme } from "nativewind";
+import { useColorScheme } from "nativewind";
+import { ThemeProvider } from "../context/ThemeContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -15,37 +15,18 @@ SplashScreen.preventAutoHideAsync();
 // Crear una instancia del cliente de React Query
 const queryClient = new QueryClient();
 
-// Colores para temas claro y oscuro
-const headerColors = {
-	light: {
-		background: "rgba(237, 242, 247, 0.85)",
-		icon: "#3B82F6",
-		iconBackground: "#93C5FD",
-		text: "#1E40AF",
-	},
-	dark: {
-		background: "rgba(17, 24, 39, 0.9)",
-		icon: "#DBEAFE",
-		iconBackground: "#1E40AF",
-		text: "#93C5FD",
-	},
-};
-
 // Componente personalizado para el encabezado
 function HeaderTitle() {
-	// Forzar el tema oscuro
-	const theme = "dark";
-	const colors = headerColors[theme];
-
 	return (
 		<View className="flex-row items-center">
-			<View
-				style={{ backgroundColor: colors.iconBackground }}
-				className="rounded-full p-1 mr-2"
-			>
-				<FontAwesome name="comments" size={18} color={colors.icon} />
+			<View className="dark:bg-blue-800 bg-blue-200 rounded-full p-1 mr-2">
+				<FontAwesome
+					name="comments"
+					size={18}
+					className="dark:text-blue-100 text-blue-600"
+				/>
 			</View>
-			<Text style={{ color: colors.text }} className="font-bold text-lg">
+			<Text className="font-bold text-lg dark:text-blue-200 text-blue-800">
 				Chat con GGUF
 			</Text>
 		</View>
@@ -57,12 +38,8 @@ export default function RootLayout() {
 		SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
 	});
 
-	// Forzar el tema oscuro
-	const theme = "dark";
-	const colors = headerColors[theme];
-
-	// Inicializar NativeWind
-	const { setColorScheme } = useNativeWindColorScheme();
+	// Inicializar NativeWind y establecer el tema oscuro
+	const { setColorScheme } = useColorScheme();
 	useEffect(() => {
 		setColorScheme("dark");
 	}, [setColorScheme]);
@@ -79,20 +56,22 @@ export default function RootLayout() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Stack
-				screenOptions={{
-					headerShown: true,
-					headerStyle: {
-						backgroundColor: colors.background,
-					},
-					headerShadowVisible: false,
-					headerTitle: () => <HeaderTitle />,
-					headerTitleAlign: "center",
-				}}
-			>
-				<Stack.Screen name="index" />
-			</Stack>
-			<StatusBar style="light" />
+			<ThemeProvider>
+				<Stack
+					screenOptions={{
+						headerShown: true,
+						headerStyle: {
+							backgroundColor: "rgba(17, 24, 39, 0.9)", // bg-gray-900/90 para dark
+						},
+						headerShadowVisible: false,
+						headerTitle: () => <HeaderTitle />,
+						headerTitleAlign: "center",
+					}}
+				>
+					<Stack.Screen name="index" />
+				</Stack>
+				<StatusBar style="light" />
+			</ThemeProvider>
 		</QueryClientProvider>
 	);
 }

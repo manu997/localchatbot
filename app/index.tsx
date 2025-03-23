@@ -7,37 +7,13 @@ import {
 	KeyboardAvoidingView,
 	Platform,
 	ActivityIndicator,
-	useColorScheme,
 	SafeAreaView,
 } from "react-native";
 import { ChatMessage } from "../components/ChatMessage";
 import { ChatInput } from "../components/ChatInput";
 import { FontAwesome } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 import "../globals.css";
-
-// Definición de colores según el tema
-const Colors = {
-	light: {
-		background: "#F3F4F6",
-		cardBackground: "#FFFFFF",
-		text: "#1F2937",
-		accentText: "#4338CA",
-		buttonBackground: "#3B82F6",
-		buttonText: "#FFFFFF",
-		icon: "#3B82F6",
-		iconBackground: "#EFF6FF",
-	},
-	dark: {
-		background: "#111827",
-		cardBackground: "#1F2937",
-		text: "#F9FAFB",
-		accentText: "#93C5FD",
-		buttonBackground: "#3B82F6",
-		buttonText: "#FFFFFF",
-		icon: "#93C5FD",
-		iconBackground: "#374151",
-	},
-};
 
 // Tipo de mensaje
 type Message = {
@@ -57,11 +33,8 @@ export default function ChatScreen() {
 	const [inputText, setInputText] = useState("");
 	const [isProcessing, setIsProcessing] = useState(false);
 	const scrollViewRef = useRef<ScrollView>(null);
-	const systemColorScheme = useColorScheme();
-
-	// Forzar tema oscuro como se solicitó
-	const theme = "dark";
-	const colors = Colors[theme];
+	const { theme } = useTheme();
+	const isDark = theme === "dark";
 
 	// Manejar el envío de mensajes
 	const handleSend = useCallback(() => {
@@ -94,13 +67,11 @@ export default function ChatScreen() {
 
 	return (
 		<SafeAreaView
-			className="flex-1"
-			style={{ backgroundColor: colors.background }}
+			className={`flex-1 ${isDark ? "bg-gray-900" : "bg-gray-100"}`}
 		>
 			<KeyboardAvoidingView
 				behavior={Platform.OS === "ios" ? "padding" : "height"}
 				className="flex-1"
-				style={{ backgroundColor: colors.background }}
 				keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
 			>
 				<View className="flex-1">
@@ -113,20 +84,22 @@ export default function ChatScreen() {
 							// Pantalla de bienvenida cuando no hay mensajes
 							<View className="flex-1 justify-center items-center p-6">
 								<View
-									className="rounded-full p-5 mb-6"
-									style={{ backgroundColor: colors.iconBackground }}
+									className={`rounded-full p-5 mb-6 ${isDark ? "bg-gray-800" : "bg-blue-50"}`}
 								>
-									<FontAwesome name="comments" size={40} color={colors.icon} />
+									<FontAwesome
+										name="comments"
+										size={40}
+										className={isDark ? "text-blue-300" : "text-blue-500"}
+										color={isDark ? "#93C5FD" : "#3B82F6"}
+									/>
 								</View>
 								<Text
-									className="text-xl font-bold text-center mb-2"
-									style={{ color: colors.text }}
+									className={`text-xl font-bold text-center mb-2 ${isDark ? "text-white" : "text-gray-800"}`}
 								>
 									Bienvenido a Chat con GGUF
 								</Text>
 								<Text
-									className="text-center mb-8 opacity-80"
-									style={{ color: colors.text }}
+									className={`text-center mb-8 ${isDark ? "text-gray-300" : "text-gray-600"}`}
 								>
 									Un asistente basado en un modelo de lenguaje local que corre
 									en tu dispositivo.
@@ -141,13 +114,9 @@ export default function ChatScreen() {
 										};
 										setMessages([initialMessage]);
 									}}
-									className="py-3 px-6 rounded-full"
-									style={{ backgroundColor: colors.buttonBackground }}
+									className={`py-3 px-6 rounded-full ${isDark ? "bg-blue-600" : "bg-blue-500"}`}
 								>
-									<Text
-										className="font-bold"
-										style={{ color: colors.buttonText }}
-									>
+									<Text className="font-bold text-white">
 										Iniciar conversación
 									</Text>
 								</TouchableOpacity>
@@ -159,13 +128,15 @@ export default function ChatScreen() {
 									key={message.id}
 									role={message.role}
 									content={message.content}
-									theme={theme}
 								/>
 							))
 						)}
 						{isProcessing && (
 							<View className="p-4 flex items-center">
-								<ActivityIndicator size="small" color={colors.icon} />
+								<ActivityIndicator
+									size="small"
+									color={isDark ? "#93C5FD" : "#3B82F6"}
+								/>
 							</View>
 						)}
 					</ScrollView>
@@ -176,7 +147,6 @@ export default function ChatScreen() {
 								onChangeText={setInputText}
 								onSend={handleSend}
 								isLoading={isProcessing}
-								theme={theme}
 							/>
 						</View>
 					)}
