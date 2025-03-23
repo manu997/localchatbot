@@ -141,7 +141,7 @@ export default function ChatScreen() {
 						)}
 					</ScrollView>
 					{messages.length > 0 && (
-						<View className="w-full">
+						<View className="w-full mb-3">
 							<ChatInput
 								value={inputText}
 								onChangeText={setInputText}
